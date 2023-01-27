@@ -1,0 +1,25 @@
+<script type="text/javascript">
+    RED.nodes.registerType('harmony-controller',{
+        category: 'network',
+        color: "rgb(215, 200, 160)",
+        defaults: {
+            name: {value:""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "white-globe.svg",
+        label: function() {
+            return this.name||"harmony-controller";
+        }
+    });
+</script>
+<script type="text/html" data-template-name="harmony-controller">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="harmony-controller">
+    <p>A basic implementation of  harmony  connections that is controlled by input message payloads eg. msg.payload.command = "connect|disconnect"  msg.payload.url = "ws://xxxxx"</p>
+</script>
