@@ -14,7 +14,7 @@ module.exports = function(RED) {
 		}
 		this.onError = (ip, err) => {
 			node.warn(["[onError] received for " + ip, err])
-			node.send({topic: node.harmonyClients[msg.ip]?._topic + "/error", ip: msg.ip, payload: {error:"Harmony on error received " + err,err: err}});
+			node.send({topic: node.harmonyClients[ip]?._topic + "/error", ip: ip, payload: {error:"Harmony on error received " + err,err: err}});
 		}
 		this.connect = async (ip, topic = "No_Topic") => {
 			try {
@@ -45,15 +45,20 @@ module.exports = function(RED) {
 		});
         node.on('input', async (msg) => {
 			const validCommands = ["connect", "disconnect", "clear", "status"];
+			const harmonyIP = msg.ip || ( (node.harmonyClients && Object.keys(node.harmonyClients).length > 0) ? Object.keys(node.harmonyClients)[0] : null);
+			if (!harmonyIP) {
+				node.warn(["No Harmony Hub Available", harmonyIP, Object.keys(node.harmonyClients), node.harmonyClients, msg ]);
+				return null
+			}
 			if ( typeof(msg.payload) == "object" && msg.payload.hasOwnProperty("activity") ) {
-				if (!node.harmonyClients[msg.ip]) {
-					node.warn("[HarmonyController][debug][cmd] " + msg.ip + " not connected, will connect ");
-					if( !await node.connect(msg.ip, msg.topic) ) return null;
+				if (!node.harmonyClients[harmonyIP]) {
+					node.warn("[HarmonyController][debug][cmd] " + harmonyIP + " not connected, will connect ");
+					if( !await node.connect(harmonyIP, msg.topic) ) return null;
 				}
-				const result = await node.harmonyClients[msg.ip].startActivity(msg.payload.activity);
+				const result = await node.harmonyClients[harmonyIP].startActivity(msg.payload.activity);
 				node.warn(["[onInput[cmd][debug] " + " startActivity result=",result]);
-				node.send( {topic: node.harmonyClients[msg.ip]?._topic + "/response",
-							ip: msg.ip,
+				node.send( {topic: node.harmonyClients[harmonyIP]?._topic + "/response",
+							ip: harmonyIP,
 							cmd: msg.payload,
 							payload: {cmd: msg.payload,
 							result: result}
