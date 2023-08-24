@@ -71,6 +71,14 @@ module.exports = function(RED) {
 				}
 				if (msg.payload == "status") {
 					node.warn("HarmonyController][info][status] " + Object.values(node.harmonyClients).length + " Servers");
+					if (msg.ip && !node.harmonyClients?.[msg.ip]) {
+						node.warn("[HarmonyController][status] Connecting to " + msg.ip );
+						const res = await node.connect(msg.ip, msg.topic)
+						if (!res) {
+							node.error("[HarmonyController][status] Failed to connect to " + msg.ip + " result=" + res );
+							return null;
+						}
+					}
 					for (const har in node.harmonyClients) {
 						node.warn(["debug " + har, node.harmonyClients[har]])
 						const activities = await node.harmonyClients[har].getActivities();
