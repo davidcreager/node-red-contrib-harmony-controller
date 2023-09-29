@@ -55,7 +55,21 @@ module.exports = function(RED) {
 					node.warn("[HarmonyController][debug][cmd] " + harmonyIP + " not connected, will connect ");
 					if( !await node.connect(harmonyIP, msg.topic) ) return null;
 				}
-				const result = await node.harmonyClients[harmonyIP].startActivity(msg.payload.activity);
+				let result;
+				try {
+					result = await node.harmonyClients[harmonyIP].startActivity(msg.payload.activity);
+				} catch (e) {
+					node.error("[Harmony-Controller][onInput] Error startActivity " + harmonyIP + " " + e);
+					node.send({topic: node.harmonyClients[msg.ip]?._topic + "/error", ip: harmonyIP, payload: {error: "Error starting activity, closing " + harmonyIP + " " + e, err: e}});
+					try {await node.harmonyClients[harmonyIP].end()} catch (er) { node.error("[Harmony-Controller][onInput][startActivity] Error closing controller " + harmonyIP + " " + er)}
+					if( !await node.connect(harmonyIP, msg.topic) ) return null;
+					try {
+						result = await node.harmonyClients[harmonyIP].startActivity(msg.payload.activity);
+					} catch (er) {
+						node.error("[Harmony-Controller][onInput] Error startActivity after reopening " + harmonyIP + " " + er);
+						return null;
+					}
+				}
 				node.warn(["[onInput[cmd][debug] " + " startActivity result=",result]);
 				node.send( {topic: node.harmonyClients[harmonyIP]?._topic + "/response",
 							ip: harmonyIP,
